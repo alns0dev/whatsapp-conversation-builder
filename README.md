@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WhatsApp Mockup Builder
+
+Create realistic WhatsApp iPhone conversation screenshots and export them as high-resolution PNGs.
+
+![WhatsApp Mockup Builder](https://img.shields.io/badge/Next.js-16-black?logo=next.js) ![License](https://img.shields.io/badge/license-MIT-blue)
+
+## Features
+
+- **Realistic iPhone frame** with Dynamic Island, status bar, and WhatsApp-style UI
+- **Editable conversations** — add, reorder, and remove text or image messages
+- **Two participants** (Contact + Brand) with customizable names and avatars
+- **Avatar uploads** — paste a URL or upload an image file (persisted in localStorage)
+- **Multiple wallpapers** — solid gradients, WhatsApp-style doodle patterns, or a custom background image
+- **Date picker** with calendar selection and editable clock/status bar
+- **High-res PNG export** at 2x pixel ratio via html2canvas
+- **Live preview** — all changes update the phone mockup in real time
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Clone the repo
+git clone https://github.com/your-username/wa-creator.git
+cd wa-creator
+
+# Install dependencies
+pnpm install
+
+# Start the dev server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Export
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Click **Export PNG** to download a screenshot of the phone mockup. The exported image is rendered at 2x resolution for crisp results on retina displays.
 
-## Learn More
+## Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+- [Next.js 16](https://nextjs.org/) (App Router)
+- [React 19](https://react.dev/)
+- [Tailwind CSS 4](https://tailwindcss.com/)
+- [shadcn/ui](https://ui.shadcn.com/) (Calendar, Popover, Button)
+- [html2canvas-pro](https://github.com/nicholasgasior/html2canvas-pro) for PNG export
+- [date-fns](https://date-fns.org/) for date formatting
+- [Lucide React](https://lucide.dev/) for icons
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+  page.tsx        # Main app — editor, preview, and export logic
+  layout.tsx      # Root layout with Inter + Geist fonts
+  globals.css     # Tailwind theme and base styles
+components/
+  ui/             # shadcn components (Button, Calendar, Popover)
+```
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[MIT](LICENSE)
