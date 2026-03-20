@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "appName": "WA Creator",
+    "howToUse": "Cómo usar"
+  },
+  "hero": {
+    "title": "WhatsApp Mockup Builder",
+    "subtitle": "Crea conversaciones realistas de WhatsApp para iPhone y expórtalas como capturas de pantalla.",
+    "exportBtn": "Exportar PNG",
+    "exporting": "Exportando..."
+  },
+  "scene": {
+    "title": "Ajustes de Escena",
+    "subtitle": "Controla la barra superior, datos del contacto y fondo de pantalla.",
+    "clock": "Reloj",
+    "chatDate": "Fecha del Chat",
+    "headerStatus": "Estado del Header",
+    "contact": "Contacto",
+    "brand": "Marca",
+    "name": "Nombre",
+    "avatarLetter": "Letra de Avatar (respaldo)",
+    "avatarImage": "Imagen de Avatar",
+    "upload": "Subir",
+    "wallpaper": "Fondo de Pantalla",
+    "backgroundImage": "Imagen de Fondo"
+  },
+  "composer": {
+    "title": "Compositor",
+    "subtitle": "Agrega mensajes de texto o imagen en el orden que deben aparecer.",
+    "addText": "Agregar Texto",
+    "addImage": "Agregar Imagen",
+    "sender": "Remitente",
+    "quickTextDraft": "Borrador Rápido",
+    "quickTextPlaceholder": "Escribe un mensaje base y luego ajusta cada burbuja abajo",
+    "outgoing": "Saliente",
+    "incoming": "Entrante",
+    "message": "Mensaje",
+    "time": "Hora",
+    "messageText": "Texto del Mensaje",
+    "imageUrl": "URL de Imagen"
+  },
+  "preview": {
+    "label": "Vista Previa",
+    "title": "iPhone WhatsApp"
+  },
+  "footer": {
+    "disclaimer": "Esta herramienta es solo para fines de marketing y demostración. Las conversaciones generadas son ficticias y no representan comunicaciones reales.",
+    "copyright": "WA Creator",
+    "madeWith": "Hecho con"
+  },
+  "howToUse": {
+    "title": "Cómo Usar",
+    "subtitle": "Crea mockups de WhatsApp profesionales en 4 simples pasos.",
+    "steps": [
+      {
+        "title": "Configura la Escena",
+        "description": "Ajusta el reloj, fecha, estado del header, nombres de los participantes y elige un fondo de pantalla."
+      },
+      {
+        "title": "Agrega Mensajes",
+        "description": "Usa el compositor para agregar mensajes de texto e imagen. Elige el remitente y ordénalos como necesites."
+      },
+      {
+        "title": "Personaliza",
+        "description": "Sube avatares personalizados, ajusta los textos de cada burbuja y configura las horas de los mensajes."
+      },
+      {
+        "title": "Exporta como PNG",
+        "description": "Haz clic en el botón Exportar PNG para descargar tu mockup como una imagen de alta calidad lista para usar."
+      }
+    ],
+    "backToBuilder": "Volver al Builder"
+  },
+  "defaults": {
+    "newMessage": "Nuevo mensaje",
+    "newImage": "Nueva imagen"
+  },
+  "initialMessages": [
+    {
+      "senderId": "contact",
+      "kind": "text",
+      "text": "Hola, vi su anuncio en Instagram. Tienen envío a CDMX?",
+      "time": "9:41"
+    },
+    {
+      "senderId": "brand",
+      "kind": "text",
+      "text": "Sí, enviamos a toda la República. Hoy tenemos entrega express en CDMX.",
+      "time": "9:42"
+    },
+    {
+      "senderId": "brand",
+      "kind": "image",
+      "text": "Este es el modelo más vendido.",
+      "time": "9:42"
+    },
+    {
+      "senderId": "contact",
+      "kind": "text",
+      "text": "Me gusta. Cuánto cuesta en color arena?",
+      "time": "9:43"
+    }
+  ]
+}

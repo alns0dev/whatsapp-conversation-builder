@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "appName": "WA Creator",
+    "howToUse": "How to Use"
+  },
+  "hero": {
+    "title": "WhatsApp Mockup Builder",
+    "subtitle": "Create realistic WhatsApp iPhone conversations and export them as screenshots.",
+    "exportBtn": "Export PNG",
+    "exporting": "Exporting..."
+  },
+  "scene": {
+    "title": "Scene Settings",
+    "subtitle": "Control the top bar, contact details, and wallpaper.",
+    "clock": "Clock",
+    "chatDate": "Chat Date",
+    "headerStatus": "Header Status",
+    "contact": "Contact",
+    "brand": "Brand",
+    "name": "Name",
+    "avatarLetter": "Avatar Letter (fallback)",
+    "avatarImage": "Avatar Image",
+    "upload": "Upload",
+    "wallpaper": "Wallpaper",
+    "backgroundImage": "Background Image"
+  },
+  "composer": {
+    "title": "Composer",
+    "subtitle": "Add text or image messages exactly in the order they should appear.",
+    "addText": "Add Text",
+    "addImage": "Add Image",
+    "sender": "Sender",
+    "quickTextDraft": "Quick Text Draft",
+    "quickTextPlaceholder": "Type a base message then adjust each bubble below",
+    "outgoing": "Outgoing",
+    "incoming": "Incoming",
+    "message": "Message",
+    "time": "Time",
+    "messageText": "Message Text",
+    "imageUrl": "Image URL"
+  },
+  "preview": {
+    "label": "Preview",
+    "title": "iPhone WhatsApp"
+  },
+  "footer": {
+    "disclaimer": "This tool is for marketing and demonstration purposes only. Generated conversations are fictional and do not represent real communications.",
+    "copyright": "WA Creator",
+    "madeWith": "Made with"
+  },
+  "howToUse": {
+    "title": "How to Use",
+    "subtitle": "Create professional WhatsApp mockups in 4 simple steps.",
+    "steps": [
+      {
+        "title": "Configure the Scene",
+        "description": "Set the clock, date, header status, participant names, and choose a wallpaper."
+      },
+      {
+        "title": "Add Messages",
+        "description": "Use the composer to add text and image messages. Choose the sender and reorder as needed."
+      },
+      {
+        "title": "Customize",
+        "description": "Upload custom avatars, adjust each bubble's text, and set message timestamps."
+      },
+      {
+        "title": "Export as PNG",
+        "description": "Click the Export PNG button to download your mockup as a high-quality image ready to use."
+      }
+    ],
+    "backToBuilder": "Back to Builder"
+  },
+  "defaults": {
+    "newMessage": "New message",
+    "newImage": "New image"
+  },
+  "initialMessages": [
+    {
+      "senderId": "contact",
+      "kind": "text",
+      "text": "Hi, I saw your ad on Instagram. Do you ship to NYC?",
+      "time": "9:41"
+    },
+    {
+      "senderId": "brand",
+      "kind": "text",
+      "text": "Yes, we ship nationwide. We have express delivery in NYC today.",
+      "time": "9:42"
+    },
+    {
+      "senderId": "brand",
+      "kind": "image",
+      "text": "This is our best-selling model.",
+      "time": "9:42"
+    },
+    {
+      "senderId": "contact",
+      "kind": "text",
+      "text": "I like it. How much is it in sand color?",
+      "time": "9:43"
+    }
+  ]
+}
