@@ -8,8 +8,10 @@ import {
   ArrowDownToLine,
   ArrowUp,
   ArrowDown,
+  ArrowLeftRight,
   Camera,
   Check,
+  ChevronDown,
   ChevronLeft,
   CirclePlus,
   Image as ImageIcon,
@@ -100,6 +102,14 @@ type Wallpaper = {
 const WA_DOODLE_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.07'%3E%3Ccircle cx='20' cy='20' r='6'/%3E%3Crect x='60' y='10' width='12' height='10' rx='2'/%3E%3Cpath d='M110 15 l6 10 l-12 0z'/%3E%3Cellipse cx='160' cy='18' rx='8' ry='5'/%3E%3Cpath d='M15 70 Q25 55 35 70'/%3E%3Crect x='70' y='62' width='10' height='14' rx='2'/%3E%3Ccircle cx='120' cy='70' r='7'/%3E%3Cpath d='M165 60 l8 8 l-8 8 l-8-8z'/%3E%3Cpath d='M25 120 l10 0 l0 10 l-10 0z'/%3E%3Ccircle cx='75' cy='125' r='5'/%3E%3Cpath d='M115 115 Q125 130 135 115'/%3E%3Crect x='160' y='118' width='14' height='8' rx='3'/%3E%3Cellipse cx='30' cy='175' rx='6' ry='8'/%3E%3Cpath d='M70 170 l12 0 l-6 12z'/%3E%3Ccircle cx='125' cy='178' r='6'/%3E%3Cpath d='M160 170 Q170 160 180 170 Q170 180 160 170'/%3E%3C/g%3E%3C/svg%3E")`;
 
 const wallpapers: Wallpaper[] = [
+  {
+    id: "hd-whatsapp",
+    label: "WhatsApp HD",
+    bg: "#0b141a",
+    swatch: 'url("/hd-whatsapp-wallpaper.jpg") center/cover no-repeat',
+    gradient: "none",
+    imageUrl: "/hd-whatsapp-wallpaper.jpg",
+  },
   {
     id: "dark-teal",
     label: "Teal",
@@ -300,29 +310,35 @@ export default function Home() {
     });
   }
 
-  async function exportScreenshot() {
+  const exportResolutions = [
+    { label: "1x", scale: 1, suffix: "430x932" },
+    { label: "2x", scale: 2, suffix: "860x1864" },
+    { label: "3x", scale: 3, suffix: "1290x2796" },
+  ] as const;
+
+  async function exportScreenshot(scale: number) {
     if (!phoneRef.current) {
       return;
     }
 
     startTransition(async () => {
       const canvas = await html2canvas(phoneRef.current!, {
-        scale: 2,
+        scale,
         useCORS: true,
         backgroundColor: null,
       });
 
       const link = document.createElement("a");
       link.href = canvas.toDataURL("image/png");
-      link.download = `${contact.name.toLowerCase().replace(/\s+/g, "-") || "whatsapp-screen"}.png`;
+      link.download = `${contact.name.toLowerCase().replace(/\s+/g, "-") || "whatsapp-screen"}-${scale}x.png`;
       link.click();
     });
   }
 
   return (
     <div className="min-h-screen bg-[#f7fafc] text-slate-900">
-      <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col gap-8 px-4 py-6 lg:px-8">
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-md lg:p-8">
+      <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col gap-8 px-4 py-6 pb-16 lg:px-8">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs lg:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl space-y-2">
               <h1 className="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
@@ -332,21 +348,45 @@ export default function Home() {
                 {t.hero.subtitle}
               </p>
             </div>
-            <Button
-              size="lg"
-              className="bg-slate-950 px-4 text-white hover:bg-slate-800"
-              onClick={exportScreenshot}
-              disabled={isPending}
-            >
-              <ArrowDownToLine className="size-4" />
-              {isPending ? t.hero.exporting : t.hero.exportBtn}
-            </Button>
+            <Popover>
+              <div className="flex">
+                <Button
+                  size="lg"
+                  className="rounded-r-none bg-slate-950 px-4 text-white hover:bg-slate-800"
+                  onClick={() => exportScreenshot(2)}
+                  disabled={isPending}
+                >
+                  <ArrowDownToLine className="size-4" />
+                  {isPending ? t.hero.exporting : t.hero.exportBtn}
+                </Button>
+                <PopoverTrigger
+                  className="inline-flex h-9 items-center rounded-l-none rounded-r-lg border-l border-white/20 bg-slate-950 px-2 text-white transition hover:bg-slate-800 disabled:opacity-50"
+                  disabled={isPending}
+                >
+                  <ChevronDown className="size-4" />
+                </PopoverTrigger>
+              </div>
+              <PopoverContent align="end" className="w-44 p-1">
+                {exportResolutions.map((res) => (
+                  <button
+                    key={res.scale}
+                    type="button"
+                    className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
+                    onClick={() => exportScreenshot(res.scale)}
+                    disabled={isPending}
+                  >
+                    <span className="font-medium">{res.label}</span>
+                    <span className="text-xs text-slate-400">{res.suffix}</span>
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           </div>
         </section>
 
-        <section className="grid flex-1 gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(420px,520px)]">
+        <section className="grid flex-1 gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(500px,540px)]">
           <div className="space-y-6">
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+            <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-950">
@@ -406,7 +446,7 @@ export default function Home() {
                 {participants.map((participant) => (
                   <div
                     key={participant.id}
-                    className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
+                    className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4"
                   >
                     <div className="mb-3 flex items-center gap-3">
                       <Avatar participant={participant} size="size-10" />
@@ -524,7 +564,15 @@ export default function Home() {
                     >
                       <span
                         className="size-7 rounded-full shadow-inner"
-                        style={{ background: entry.swatch }}
+                        style={
+                          entry.imageUrl
+                            ? {
+                                backgroundImage: `url(${entry.imageUrl})`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                              }
+                            : { background: entry.swatch }
+                        }
                       />
                       {entry.label}
                     </button>
@@ -582,7 +630,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+            <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs md:p-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-950">
@@ -646,7 +694,7 @@ export default function Home() {
                   return (
                     <article
                       key={message.id}
-                      className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm"
+                      className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-4"
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="flex items-center gap-3">
@@ -695,6 +743,7 @@ export default function Home() {
                             variant="outline"
                             size="icon-sm"
                             className="border-slate-300 bg-white text-slate-700"
+                            title="Toggle sender"
                             onClick={() =>
                               updateMessage(
                                 message.id,
@@ -705,7 +754,7 @@ export default function Home() {
                               )
                             }
                           >
-                            <CirclePlus className="size-4" />
+                            <ArrowLeftRight className="size-4" />
                           </Button>
                           <Button
                             variant="outline"
@@ -771,8 +820,8 @@ export default function Home() {
             </div>
           </div>
 
-          <aside className="xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">
-            <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm md:p-6">
+          <aside className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:self-start">
+            <div className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-5 text-slate-900 shadow-xs md:p-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.22em] text-slate-500">
@@ -782,16 +831,16 @@ export default function Home() {
                     {t.preview.title}
                   </h2>
                 </div>
-                <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600">
+                <div className="rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 text-xs text-slate-600">
                   430 x 932
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-1 items-center justify-center">
+              <div className="mt-5 flex items-center justify-center">
                 <div
                   ref={phoneRef}
                   style={{ fontFamily: "var(--font-inter), sans-serif" }}
-                  className="relative w-full max-w-[430px] overflow-hidden rounded-[58px] border-[11px] border-[#0f1118] bg-[#0a0d14] p-[7px] shadow-[0_45px_120px_-50px_rgba(0,0,0,1)]"
+                  className="relative w-full max-w-[430px] overflow-hidden rounded-[58px] border-[11px] border-[#0f1118] bg-[#0a0d14] p-[7px] shadow-[0_30px_80px_-40px_rgba(0,0,0,0.6)]"
                 >
                   <div className="absolute -left-[3px] top-32 z-40 h-16 w-[3px] rounded-r-full bg-slate-700/70" />
                   <div className="absolute -left-[3px] top-52 z-40 h-24 w-[3px] rounded-r-full bg-slate-700/70" />
@@ -801,65 +850,63 @@ export default function Home() {
                       <span className="text-[17px] tracking-[-0.01em]">
                         {statusBarTime}
                       </span>
-                      <div className="relative mx-auto h-[30px] w-[120px] rounded-full bg-[#05070c] shadow-[inset_0_-2px_6px_rgba(255,255,255,0.1)]" />
-                      <div className="flex items-center gap-2 text-xs font-semibold text-white">
-                        <div className="flex items-end gap-[2px]">
-                          {[8, 11, 14, 17].map((height) => (
+                      <div className="relative mx-auto h-[30px] w-[120px] rounded-full bg-[#05070c] shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),inset_0_-1px_3px_rgba(255,255,255,0.06)]" />
+                      <div className="flex items-center gap-[6px] text-white">
+                        {/* Signal bars */}
+                        <div className="flex items-end gap-[1.5px]">
+                          {[5, 8, 11, 14].map((height) => (
                             <span
                               key={height}
-                              className="block w-[3px] rounded-full bg-white"
+                              className="block w-[3.5px] rounded-sm bg-white"
                               style={{ height }}
                             />
                           ))}
                         </div>
+                        {/* WiFi */}
                         <svg
-                          width="15"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="white"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                          width="17"
+                          height="13"
+                          viewBox="0 0 16 12"
+                          fill="white"
                           aria-hidden
                         >
-                          <path d="M12 20h.01" />
-                          <path d="M2 8.82a15 15 0 0 1 20 0" />
-                          <path d="M5 12.859a10 10 0 0 1 14 0" />
-                          <path d="M8.5 16.429a5 5 0 0 1 7 0" />
+                          <path d="M8 9.6a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8Z" />
+                          <path d="M4.93 8.47a4.5 4.5 0 0 1 6.14 0 .75.75 0 0 0 1.03-1.09 6 6 0 0 0-8.2 0 .75.75 0 1 0 1.03 1.09Z" />
+                          <path d="M2.1 5.64a8 8 0 0 1 11.8 0 .75.75 0 1 0 1.1-1.02 9.5 9.5 0 0 0-14 0 .75.75 0 0 0 1.1 1.02Z" />
                         </svg>
+                        {/* Battery */}
                         <div className="relative">
                           <svg
-                            width="28"
-                            height="13"
-                            viewBox="0 0 28 13"
+                            width="30"
+                            height="14"
+                            viewBox="0 0 30 14"
                             fill="none"
                             aria-hidden
                           >
                             <rect
                               x="0.5"
                               y="0.5"
-                              width="23"
-                              height="12"
-                              rx="2.5"
+                              width="24"
+                              height="13"
+                              rx="3"
                               stroke="white"
                               strokeOpacity="0.35"
                             />
                             <rect
                               x="2"
                               y="2"
-                              width="18"
-                              height="9"
-                              rx="1.5"
+                              width="19"
+                              height="10"
+                              rx="2"
                               fill="white"
                             />
                             <path
-                              d="M25 4.5V8.5C25.8 8.1 25.8 4.9 25 4.5Z"
+                              d="M26.5 5V9.5C27.5 9 27.5 5.5 26.5 5Z"
                               fill="white"
                               fillOpacity="0.4"
                             />
                           </svg>
-                          <span className="absolute inset-0 flex items-center justify-center pr-[5px] text-[9px] font-semibold leading-none text-[#0f1118]">
+                          <span className="absolute inset-0 flex items-center justify-center pr-[5px] text-[10px] font-bold leading-none text-[#0f1118]">
                             92
                           </span>
                         </div>
@@ -870,10 +917,15 @@ export default function Home() {
                     className="relative aspect-[430/932] overflow-hidden rounded-[46px] text-slate-900"
                     style={{ backgroundColor: activeWallpaper.bg }}
                   >
-                    {activeWallpaper.id === "custom-image" &&
-                    customWallpaperUrl ? (
+                    {(
+                      activeWallpaper.imageUrl ||
+                      (activeWallpaper.id === "custom-image" &&
+                        customWallpaperUrl)
+                    ) ? (
                       <img
-                        src={customWallpaperUrl}
+                        src={
+                          activeWallpaper.imageUrl ?? customWallpaperUrl
+                        }
                         alt=""
                         className="absolute inset-0 h-full w-full object-cover"
                       />
@@ -905,10 +957,10 @@ export default function Home() {
                     />
 
                     <div className="relative z-10 flex h-full flex-col">
-                      <div className="rounded-b-[18px] bg-[#1b242d] pb-2.5 pt-12 shadow-[0_14px_40px_-30px_rgba(0,0,0,0.55)]">
+                      <div className="rounded-b-none bg-[#1b242d] pb-4 pt-12 shadow-[0_14px_40px_-30px_rgba(0,0,0,0.55)]">
                         <div className="flex items-center gap-2 px-3 text-white/95">
-                          <div className="flex size-12 items-center justify-center rounded-full border border-white/20 bg-white/5">
-                            <ChevronLeft className="size-5" />
+                          <div className="flex size-8 items-center justify-center rounded-full border border-white/20 bg-white/[0.07]">
+                            <ChevronLeft className="-ml-px size-4" />
                           </div>
                           <Avatar
                             participant={contact}
@@ -923,14 +975,14 @@ export default function Home() {
                               {chatStatus}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-3 py-2">
-                            <Video className="size-5" />
-                            <Phone className="size-5" />
+                          <div className="flex items-center gap-4 rounded-full border border-white/20 bg-white/[0.07] px-4 py-2">
+                            <Video className="size-[22px]" />
+                            <Phone className="size-[20px]" />
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex-1 space-y-2 overflow-hidden px-3 pb-3 pt-3">
+                      <div className="min-h-0 flex-1 space-y-2 overflow-x-clip overflow-y-auto px-3 pb-3 pt-3">
                         <div className="flex justify-center">
                           <span className="text-[12px] font-semibold text-white/80">
                             {format(chatDate, "EEE d MMM", { locale: dateLocale })}
@@ -946,56 +998,62 @@ export default function Home() {
                               key={message.id}
                               className={cn(
                                 "flex",
-                                isBrand ? "justify-end" : "justify-start",
+                                isBrand ? "justify-end pr-0.5" : "justify-start pl-0.5",
                               )}
                             >
-                              <div
-                                className={cn(
-                                  "max-w-[82%] rounded-[18px] px-3 py-2 shadow-[0_12px_20px_-16px_rgba(0,0,0,0.75)]",
-                                  isBrand
-                                    ? "rounded-br-[6px] bg-[#0c6d50]"
-                                    : "rounded-bl-[6px] bg-[#1f2832]",
-                                )}
-                              >
-                                {message.kind === "image" &&
-                                message.imageUrl ? (
-                                  <div className="overflow-hidden rounded-[12px] bg-slate-200">
-                                    <img
-                                      src={message.imageUrl}
-                                      alt="Message attachment"
-                                      className="h-40 w-full object-cover"
-                                    />
-                                  </div>
-                                ) : null}
-                                {message.text ? (
-                                  <p className="mt-1 whitespace-pre-wrap text-[15px] leading-[1.34] text-white">
-                                    {message.text}
-                                  </p>
-                                ) : null}
-                                <div className="mt-1 flex items-center justify-end gap-1 text-[12px] text-white/55">
-                                  <span>{message.time}</span>
-                                  {isBrand ? (
-                                    <span className="flex items-center text-[#a4d7ef]">
-                                      <Check className="size-3.5 -mr-2.5" />
-                                      <Check className="size-3.5" />
-                                    </span>
+                              <div className="relative max-w-[82%]">
+                                <div
+                                  className={cn(
+                                    "relative z-[1] rounded-[18px] px-3 py-2 shadow-[0_12px_20px_-16px_rgba(0,0,0,0.75)]",
+                                    isBrand
+                                      ? "rounded-br-[3px] bg-[#0c6d50]"
+                                      : "rounded-bl-[3px] bg-[#1f2832]",
+                                  )}
+                                >
+                                  {message.kind === "image" &&
+                                  message.imageUrl ? (
+                                    <div className="overflow-hidden rounded-[12px] bg-slate-200">
+                                      <img
+                                        src={message.imageUrl}
+                                        alt="Message attachment"
+                                        className="h-40 w-full object-cover"
+                                      />
+                                    </div>
                                   ) : null}
+                                  {message.text ? (
+                                    <p className="mt-1 whitespace-pre-wrap text-[15px] leading-[1.34] text-white">
+                                      {message.text}
+                                    </p>
+                                  ) : null}
+                                  <div className="mt-1 flex items-center justify-end gap-1 text-[12px] text-white/55">
+                                    <span>{message.time}</span>
+                                    {isBrand ? (
+                                      <span className="flex items-center text-[#a4d7ef]">
+                                        <Check className="size-3.5 -mr-2.5" />
+                                        <Check className="size-3.5" />
+                                      </span>
+                                    ) : null}
+                                  </div>
                                 </div>
+                                <MessageBubbleTail
+                                  side={isBrand ? "right" : "left"}
+                                  fill={isBrand ? "#0c6d50" : "#1f2832"}
+                                />
                               </div>
                             </div>
                           );
                         })}
                       </div>
 
-                      <div className="bg-[#1b242d]/90 px-3 pb-4 pt-3 backdrop-blur-3xl">
-                        <div className="flex items-center gap-2">
-                          <CirclePlus className="size-8 text-white/80" />
-                          <div className="flex h-11 flex-1 items-center gap-2 rounded-full bg-[#2a2e34] px-4 text-[14px]">
+                      <div className="bg-[#1b242d]/90 px-4 pb-8 pt-3 backdrop-blur-3xl">
+                        <div className="flex items-center gap-3">
+                          <Plus className="size-7 text-white/90" strokeWidth={1.8} />
+                          <div className="flex h-[42px] flex-1 items-center gap-2 rounded-full bg-[#2a2e34] px-4 text-[14px]">
                             <div className="flex-1" />
                             <svg
-                              className="size-5"
-                              width="20"
-                              height="20"
+                              className="size-[22px]"
+                              width="22"
+                              height="22"
                               viewBox="0 0 20 20"
                               fill="white"
                               xmlns="http://www.w3.org/2000/svg"
@@ -1006,8 +1064,8 @@ export default function Home() {
                               />
                             </svg>
                           </div>
-                          <Camera className="size-6 text-white/80" />
-                          <Mic className="size-6 text-white/80" />
+                          <Camera className="size-7 text-white/90" strokeWidth={1.5} />
+                          <Mic className="size-7 text-white/90" strokeWidth={1.5} />
                         </div>
                       </div>
                     </div>
@@ -1019,6 +1077,33 @@ export default function Home() {
         </section>
       </div>
     </div>
+  );
+}
+
+/** WhatsApp-style corner tail on the bottom outer edge of the bubble. */
+function MessageBubbleTail({
+  side,
+  fill,
+}: {
+  side: "left" | "right";
+  fill: string;
+}) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='16' height='20' viewBox='0 0 16 18'><path d='M0 0C0 10 5 18 16 18H0V0Z' fill='${fill}'/></svg>`;
+  const src = `data:image/svg+xml;base64,${typeof window !== "undefined" ? window.btoa(svg) : ""}`;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      alt=""
+      src={src}
+      className="pointer-events-none absolute -bottom-px"
+      style={
+        side === "right"
+          ? { right: -13, width: 16, height: 20 }
+          : { left: -13, width: 16, height: 20, transform: "scaleX(-1)" }
+      }
+      aria-hidden
+    />
   );
 }
 

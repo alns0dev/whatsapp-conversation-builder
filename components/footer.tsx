@@ -7,7 +7,7 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-slate-200 bg-white/80 backdrop-blur-lg">
+    <footer className="relative z-10 border-t border-slate-200/80 bg-white/90 backdrop-blur-lg">
       <div className="mx-auto max-w-[1600px] px-4 py-6 lg:px-8">
         <p className="text-center text-xs text-slate-500">
           {t.footer.disclaimer}
