@@ -210,6 +210,7 @@ export default function Home() {
     initialParticipants[1].id,
   );
   const [customWallpaperUrl, setCustomWallpaperUrl] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
   const [isPending, startTransition] = useTransition();
   const phoneRef = useRef<HTMLDivElement>(null);
 
@@ -321,12 +322,19 @@ export default function Home() {
       return;
     }
 
+    setIsExporting(true);
+
+    // Wait a frame so React renders the img-based tails
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
     startTransition(async () => {
       const canvas = await html2canvas(phoneRef.current!, {
         scale,
         useCORS: true,
         backgroundColor: null,
       });
+
+      setIsExporting(false);
 
       const link = document.createElement("a");
       link.href = canvas.toDataURL("image/png");
@@ -1038,6 +1046,7 @@ export default function Home() {
                                 <MessageBubbleTail
                                   side={isBrand ? "right" : "left"}
                                   fill={isBrand ? "#0c6d50" : "#1f2832"}
+                                  useImg={isExporting}
                                 />
                               </div>
                             </div>
@@ -1084,26 +1093,48 @@ export default function Home() {
 function MessageBubbleTail({
   side,
   fill,
+  useImg,
 }: {
   side: "left" | "right";
   fill: string;
+  useImg?: boolean;
 }) {
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='16' height='20' viewBox='0 0 16 18'><path d='M0 0C0 10 5 18 16 18H0V0Z' fill='${fill}'/></svg>`;
-  const src = `data:image/svg+xml;base64,${typeof window !== "undefined" ? window.btoa(svg) : ""}`;
+  const posStyle =
+    side === "right"
+      ? { right: -13, width: 16, height: 20 }
+      : { left: -13, width: 16, height: 20, transform: "scaleX(-1)" as const };
+
+  if (useImg) {
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='16' height='20' viewBox='0 0 16 18'><path d='M0 0C0 10 5 18 16 18H0V0Z' fill='${fill}'/></svg>`;
+    const src = `data:image/svg+xml;base64,${typeof window !== "undefined" ? window.btoa(svg) : ""}`;
+
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        alt=""
+        src={src}
+        className="pointer-events-none absolute -bottom-px"
+        style={posStyle}
+        aria-hidden
+      />
+    );
+  }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      alt=""
-      src={src}
-      className="pointer-events-none absolute -bottom-px"
-      style={
+    <svg
+      className={cn(
+        "pointer-events-none absolute -bottom-px",
         side === "right"
-          ? { right: -13, width: 16, height: 20 }
-          : { left: -13, width: 16, height: 20, transform: "scaleX(-1)" }
-      }
+          ? "right-0 translate-x-[13px]"
+          : "left-0 -translate-x-[13px] scale-x-[-1]",
+      )}
+      width="16"
+      height="20"
+      viewBox="0 0 16 18"
       aria-hidden
-    />
+    >
+      <path d="M0 0C0 10 5 18 16 18H0V0Z" fill={fill} />
+    </svg>
   );
 }
 
