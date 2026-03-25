@@ -483,7 +483,8 @@ export default function Home() {
           chunks.push(event.data);
         }
       };
-      recorder.onerror = () => reject(recorder.error ?? new Error("MediaRecorder error"));
+      recorder.onerror = (event) =>
+        reject(event instanceof ErrorEvent ? event.error : new Error("MediaRecorder error"));
       recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
     });
 
