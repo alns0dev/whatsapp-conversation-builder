@@ -7,7 +7,15 @@ export type Dictionary = {
     title: string;
     subtitle: string;
     exportBtn: string;
+    exportVideoBtn: string;
+    exportMp4Btn: string;
     exporting: string;
+    exportingVideo: string;
+    videoUnsupported: string;
+    videoFailed: string;
+    videoConverting: string;
+    mp4Disabled: string;
+    mp4LocalEnabled: string;
   };
   scene: {
     title: string;
@@ -42,6 +50,8 @@ export type Dictionary = {
   preview: {
     label: string;
     title: string;
+    playAnimation: string;
+    playingAnimation: string;
   };
   footer: {
     disclaimer: string;

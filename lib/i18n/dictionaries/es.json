@@ -5,9 +5,17 @@
   },
   "hero": {
     "title": "WhatsApp Mockup Builder",
-    "subtitle": "Crea conversaciones realistas de WhatsApp para iPhone y expórtalas como capturas de pantalla.",
+    "subtitle": "Crea conversaciones realistas de WhatsApp para iPhone y expórtalas como capturas o videos animados.",
     "exportBtn": "Exportar PNG",
-    "exporting": "Exportando..."
+    "exportVideoBtn": "Exportar WEBM",
+    "exportMp4Btn": "Exportar MP4",
+    "exporting": "Exportando...",
+    "exportingVideo": "Grabando video...",
+    "videoUnsupported": "La exportación de video no es compatible con este navegador.",
+    "videoFailed": "La exportación de video falló. Revisa la consola para más detalles.",
+    "videoConverting": "Convirtiendo a MP4...",
+    "mp4Disabled": "La conversión a MP4 está deshabilitada en despliegues hosteados. Si haces self-hosting con un binario local de ffmpeg, la exportación MP4 puede habilitarse.",
+    "mp4LocalEnabled": "La exportación MP4 está habilitada en localhost porque la app puede usar un binario local de ffmpeg para la conversión."
   },
   "scene": {
     "title": "Ajustes de Escena",
@@ -41,7 +49,9 @@
   },
   "preview": {
     "label": "Vista Previa",
-    "title": "iPhone WhatsApp"
+    "title": "iPhone WhatsApp",
+    "playAnimation": "Repetir Chat",
+    "playingAnimation": "Reproduciendo..."
   },
   "footer": {
     "disclaimer": "Esta herramienta es solo para fines de marketing y demostración. Las conversaciones generadas son ficticias y no representan comunicaciones reales.",

@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas-pro";
 import {
   ArrowDownToLine,
@@ -13,13 +13,10 @@ import {
   Check,
   ChevronDown,
   ChevronLeft,
-  CirclePlus,
   Image as ImageIcon,
   Mic,
   Phone,
   Plus,
-  Smile,
-  Sticker,
   Trash2,
   Upload,
   Video,
@@ -195,6 +192,46 @@ function removeFromStorage(key: string) {
   }
 }
 
+const MESSAGE_ENTER_MS = 340;
+const MESSAGE_HOLD_MS = 520;
+const VIDEO_FPS = 8;
+const VIDEO_SCALE = 2;
+
+function wait(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function waitForAnimationFrames(count = 2) {
+  return new Promise<void>((resolve) => {
+    const step = (remaining: number) => {
+      if (remaining <= 0) {
+        resolve();
+        return;
+      }
+
+      requestAnimationFrame(() => step(remaining - 1));
+    };
+
+    step(count);
+  });
+}
+
+function getSupportedVideoMimeType() {
+  if (typeof MediaRecorder === "undefined") {
+    return null;
+  }
+
+  const mimeTypes = [
+    "video/webm;codecs=vp9",
+    "video/webm;codecs=vp8",
+    "video/webm",
+  ];
+
+  return mimeTypes.find((mimeType) => MediaRecorder.isTypeSupported(mimeType)) ?? null;
+}
+
 export default function Home() {
   const { t, lang } = useTranslation();
   const dateLocale = lang === "en" ? enUS : es;
@@ -211,8 +248,15 @@ export default function Home() {
   );
   const [customWallpaperUrl, setCustomWallpaperUrl] = useState("");
   const [isExporting, setIsExporting] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isExportingVideo, setIsExportingVideo] = useState(false);
+  const [isConvertingVideo, setIsConvertingVideo] = useState(false);
+  const [videoExportFormat, setVideoExportFormat] = useState<"webm" | "mp4" | null>(null);
+  const [isLocalhost, setIsLocalhost] = useState(false);
+  const [isPreviewAnimating, setIsPreviewAnimating] = useState(false);
+  const [visibleMessageCount, setVisibleMessageCount] = useState(messages.length);
+  const [animatingMessageId, setAnimatingMessageId] = useState<string | null>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
+  const messagesViewportRef = useRef<HTMLDivElement>(null);
 
   // Hydrate uploaded images from localStorage on mount
   useEffect(() => {
@@ -223,6 +267,12 @@ export default function Home() {
       })),
     );
     setCustomWallpaperUrl(loadFromStorage("wa-wallpaper-custom", ""));
+    const hostname = window.location.hostname;
+    setIsLocalhost(
+      hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === "0.0.0.0",
+    );
   }, []);
 
   const handleImageUpload = useCallback(
@@ -247,6 +297,32 @@ export default function Home() {
       ),
     [participants],
   );
+  const visibleMessages =
+    isPreviewAnimating || isExportingVideo
+      ? messages.slice(0, visibleMessageCount)
+      : messages;
+  const isBusy = isExporting || isExportingVideo || isConvertingVideo || isPreviewAnimating;
+
+  const scrollPreviewToBottom = useCallback(() => {
+    const viewport = messagesViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    viewport.scrollTop = viewport.scrollHeight;
+  }, []);
+
+  useEffect(() => {
+    if (!isPreviewAnimating && !isExportingVideo) {
+      setVisibleMessageCount(messages.length);
+      setAnimatingMessageId(null);
+    }
+  }, [messages.length, isPreviewAnimating, isExportingVideo]);
+
+  useEffect(() => {
+    scrollPreviewToBottom();
+  }, [scrollPreviewToBottom, visibleMessageCount, messages.length]);
 
   function updateParticipant(
     id: string,
@@ -317,30 +393,205 @@ export default function Home() {
     { label: "3x", scale: 3, suffix: "1290x2796" },
   ] as const;
 
+  async function replayConversation() {
+    if (isBusy || isPreviewAnimating) {
+      return;
+    }
+
+    setIsPreviewAnimating(true);
+    setVisibleMessageCount(0);
+    setAnimatingMessageId(null);
+
+    await waitForAnimationFrames();
+    await wait(220);
+
+    for (const [index, message] of messages.entries()) {
+      setVisibleMessageCount(index + 1);
+      setAnimatingMessageId(message.id);
+
+      await waitForAnimationFrames();
+      await wait(MESSAGE_ENTER_MS);
+
+      setAnimatingMessageId(null);
+      await wait(MESSAGE_HOLD_MS);
+    }
+
+    setIsPreviewAnimating(false);
+    setVisibleMessageCount(messages.length);
+    setAnimatingMessageId(null);
+  }
+
   async function exportScreenshot(scale: number) {
-    if (!phoneRef.current) {
+    if (!phoneRef.current || isBusy) {
       return;
     }
 
     setIsExporting(true);
 
     // Wait a frame so React renders the img-based tails
-    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await waitForAnimationFrames();
 
-    startTransition(async () => {
-      const canvas = await html2canvas(phoneRef.current!, {
+    try {
+      const canvas = await html2canvas(phoneRef.current, {
         scale,
         useCORS: true,
         backgroundColor: null,
       });
 
-      setIsExporting(false);
-
       const link = document.createElement("a");
       link.href = canvas.toDataURL("image/png");
       link.download = `${contact.name.toLowerCase().replace(/\s+/g, "-") || "whatsapp-screen"}-${scale}x.png`;
       link.click();
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  async function exportVideo(format: "webm" | "mp4") {
+    if (!phoneRef.current || isBusy || (format === "mp4" && !isLocalhost)) {
+      return;
+    }
+
+    const mimeType = getSupportedVideoMimeType();
+
+    if (!mimeType) {
+      window.alert(t.hero.videoUnsupported);
+      return;
+    }
+
+    const frameInterval = 1000 / VIDEO_FPS;
+    const rect = phoneRef.current.getBoundingClientRect();
+    const recordingCanvas = document.createElement("canvas");
+    recordingCanvas.width = Math.round(rect.width * VIDEO_SCALE);
+    recordingCanvas.height = Math.round(rect.height * VIDEO_SCALE);
+
+    const context = recordingCanvas.getContext("2d");
+    if (!context) {
+      window.alert(t.hero.videoFailed);
+      return;
+    }
+
+    const stream = recordingCanvas.captureStream(VIDEO_FPS);
+    const recorder = new MediaRecorder(stream, {
+      mimeType,
+      videoBitsPerSecond: 8_000_000,
     });
+    const chunks: BlobPart[] = [];
+    const recording = new Promise<Blob>((resolve, reject) => {
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+      recorder.onerror = () => reject(recorder.error ?? new Error("MediaRecorder error"));
+      recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
+    });
+
+    const captureFrame = async () => {
+      const canvas = await html2canvas(phoneRef.current!, {
+        scale: VIDEO_SCALE,
+        useCORS: true,
+        backgroundColor: null,
+      });
+
+      context.clearRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+      context.drawImage(canvas, 0, 0, recordingCanvas.width, recordingCanvas.height);
+    };
+
+    const recordPhase = async (durationMs: number) => {
+      const frameCount = Math.max(1, Math.ceil(durationMs / frameInterval));
+
+      for (let frame = 0; frame < frameCount; frame += 1) {
+        const startedAt = performance.now();
+
+        await captureFrame();
+
+        const remaining = frameInterval - (performance.now() - startedAt);
+        if (remaining > 0) {
+          await wait(remaining);
+        }
+      }
+    };
+
+    setIsExporting(true);
+    setIsExportingVideo(true);
+    setIsConvertingVideo(false);
+    setVideoExportFormat(format);
+    setVisibleMessageCount(0);
+    setAnimatingMessageId(null);
+
+    try {
+      recorder.start();
+
+      await waitForAnimationFrames();
+      await recordPhase(260);
+
+      for (const [index, message] of messages.entries()) {
+        setVisibleMessageCount(index + 1);
+        setAnimatingMessageId(message.id);
+
+        await waitForAnimationFrames();
+        await recordPhase(MESSAGE_ENTER_MS);
+
+        setAnimatingMessageId(null);
+        await waitForAnimationFrames(1);
+        await recordPhase(MESSAGE_HOLD_MS);
+      }
+
+      await recordPhase(320);
+      recorder.stop();
+
+      const blob = await recording;
+      let downloadBlob = blob;
+      let extension = "webm";
+
+      if (format === "mp4") {
+        setIsExportingVideo(false);
+        setIsConvertingVideo(true);
+
+        const formData = new FormData();
+        formData.append(
+          "video",
+          new File([blob], "whatsapp-conversation.webm", {
+            type: blob.type || mimeType,
+          }),
+        );
+
+        const response = await fetch("/api/export-video", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Video conversion failed");
+        }
+
+        downloadBlob = await response.blob();
+        extension = "mp4";
+      }
+
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(downloadBlob);
+      link.href = url;
+      link.download = `${contact.name.toLowerCase().replace(/\s+/g, "-") || "whatsapp-screen"}-animated.${extension}`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      if (recorder.state !== "inactive") {
+        recorder.stop();
+      }
+      window.alert(t.hero.videoFailed);
+    } finally {
+      stream.getTracks().forEach((track) => track.stop());
+      setIsExporting(false);
+      setIsExportingVideo(false);
+      setIsConvertingVideo(false);
+      setVideoExportFormat(null);
+      setIsPreviewAnimating(false);
+      setVisibleMessageCount(messages.length);
+      setAnimatingMessageId(null);
+    }
   }
 
   return (
@@ -356,40 +607,78 @@ export default function Home() {
                 {t.hero.subtitle}
               </p>
             </div>
-            <Popover>
-              <div className="flex">
-                <Button
-                  size="lg"
-                  className="rounded-r-none bg-slate-950 px-4 text-white hover:bg-slate-800"
-                  onClick={() => exportScreenshot(2)}
-                  disabled={isPending}
-                >
-                  <ArrowDownToLine className="size-4" />
-                  {isPending ? t.hero.exporting : t.hero.exportBtn}
-                </Button>
-                <PopoverTrigger
-                  className="inline-flex h-9 items-center rounded-l-none rounded-r-lg border-l border-white/20 bg-slate-950 px-2 text-white transition hover:bg-slate-800 disabled:opacity-50"
-                  disabled={isPending}
-                >
-                  <ChevronDown className="size-4" />
-                </PopoverTrigger>
-              </div>
-              <PopoverContent align="end" className="w-44 p-1">
-                {exportResolutions.map((res) => (
-                  <button
-                    key={res.scale}
-                    type="button"
-                    className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
-                    onClick={() => exportScreenshot(res.scale)}
-                    disabled={isPending}
+            <div className="flex flex-wrap items-center gap-3">
+              <Popover>
+                <div className="flex">
+                  <Button
+                    size="lg"
+                    className="rounded-r-none bg-slate-950 px-4 text-white hover:bg-slate-800"
+                    onClick={() => exportScreenshot(2)}
+                    disabled={isBusy}
                   >
-                    <span className="font-medium">{res.label}</span>
-                    <span className="text-xs text-slate-400">{res.suffix}</span>
-                  </button>
-                ))}
-              </PopoverContent>
-            </Popover>
+                    <ArrowDownToLine className="size-4" />
+                    {isExporting ? t.hero.exporting : t.hero.exportBtn}
+                  </Button>
+                  <PopoverTrigger
+                    className="inline-flex h-9 items-center rounded-l-none rounded-r-lg border-l border-white/20 bg-slate-950 px-2 text-white transition hover:bg-slate-800 disabled:opacity-50"
+                    disabled={isBusy}
+                  >
+                    <ChevronDown className="size-4" />
+                  </PopoverTrigger>
+                </div>
+                <PopoverContent align="end" className="w-44 p-1">
+                  {exportResolutions.map((res) => (
+                    <button
+                      key={res.scale}
+                      type="button"
+                      className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
+                      onClick={() => exportScreenshot(res.scale)}
+                      disabled={isBusy}
+                    >
+                      <span className="font-medium">{res.label}</span>
+                      <span className="text-xs text-slate-400">{res.suffix}</span>
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
+                onClick={() => exportVideo("webm")}
+                disabled={isBusy}
+              >
+                <Video className="size-4" />
+                {isExportingVideo && videoExportFormat === "webm"
+                  ? t.hero.exportingVideo
+                  : t.hero.exportVideoBtn}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className={cn(
+                  "opacity-100",
+                  isLocalhost
+                    ? "border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
+                    : "border-slate-200 bg-slate-100 text-slate-400",
+                )}
+                onClick={() => exportVideo("mp4")}
+                disabled={isBusy || !isLocalhost}
+                aria-disabled={!isLocalhost}
+                title={t.hero.mp4Disabled}
+              >
+                <Video className="size-4" />
+                {isExportingVideo && videoExportFormat === "mp4"
+                  ? t.hero.exportingVideo
+                  : isConvertingVideo
+                    ? t.hero.videoConverting
+                    : t.hero.exportMp4Btn}
+              </Button>
+            </div>
           </div>
+          <p className="max-w-3xl text-sm text-slate-500">
+            {isLocalhost ? t.hero.mp4LocalEnabled : t.hero.mp4Disabled}
+          </p>
         </section>
 
         <section className="grid flex-1 gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(500px,540px)]">
@@ -830,7 +1119,7 @@ export default function Home() {
 
           <aside className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:self-start">
             <div className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-5 text-slate-900 shadow-xs md:p-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.22em] text-slate-500">
                     {t.preview.label}
@@ -839,8 +1128,21 @@ export default function Home() {
                     {t.preview.title}
                   </h2>
                 </div>
-                <div className="rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 text-xs text-slate-600">
-                  430 x 932
+                <div className="flex items-center gap-2">
+                  <div className="rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 text-xs text-slate-600">
+                    430 x 932
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-slate-300 bg-white text-slate-900"
+                    onClick={replayConversation}
+                    disabled={isBusy || isPreviewAnimating}
+                  >
+                    {isPreviewAnimating
+                      ? t.preview.playingAnimation
+                      : t.preview.playAnimation}
+                  </Button>
                 </div>
               </div>
 
@@ -990,16 +1292,20 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="min-h-0 flex-1 space-y-2 overflow-x-clip overflow-y-auto px-3 pb-3 pt-3">
+                      <div
+                        ref={messagesViewportRef}
+                        className="min-h-0 flex-1 space-y-2 overflow-x-clip overflow-y-auto px-3 pb-3 pt-3"
+                      >
                         <div className="flex justify-center">
                           <span className="text-[12px] font-semibold text-white/80">
                             {format(chatDate, "EEE d MMM", { locale: dateLocale })}
                           </span>
                         </div>
-                        {messages.map((message, index) => {
+                        {visibleMessages.map((message) => {
                           const sender =
                             participantLookup[message.senderId] ?? brand;
                           const isBrand = sender.id === brand.id;
+                          const isAnimatingMessage = animatingMessageId === message.id;
 
                           return (
                             <div
@@ -1009,7 +1315,13 @@ export default function Home() {
                                 isBrand ? "justify-end pr-0.5" : "justify-start pl-0.5",
                               )}
                             >
-                              <div className="relative max-w-[82%]">
+                              <div
+                                className="wa-bubble-enter relative max-w-[82%]"
+                                data-active={isAnimatingMessage ? "true" : "false"}
+                                style={{
+                                  transformOrigin: isBrand ? "100% 100%" : "0% 100%",
+                                }}
+                              >
                                 <div
                                   className={cn(
                                     "relative z-[1] rounded-[18px] px-3 py-2 shadow-[0_12px_20px_-16px_rgba(0,0,0,0.75)]",
@@ -1109,7 +1421,6 @@ function MessageBubbleTail({
     const src = `data:image/svg+xml;base64,${typeof window !== "undefined" ? window.btoa(svg) : ""}`;
 
     return (
-      // eslint-disable-next-line @next/next/no-img-element
       <img
         alt=""
         src={src}
